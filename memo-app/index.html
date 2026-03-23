@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심플 메모 앱 (Simple Memo)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .editor-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .editor-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        input, textarea {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s, outline 0.2s;
+            background-color: #fcfcfc;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background-color: #fff;
+        }
+
+        input {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .note-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .note-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .note-content {
+            color: var(--text-muted);
+            flex-grow: 1;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            white-space: pre-wrap;
+        }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .note-actions button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📝 메모장</h1>
+        <p class="subtitle">작성한 메모가 DB에 영구 저장됩니다.</p>
+    </header>
+
+    <div class="editor-card">
+        <input type="hidden" id="note-id">
+        <input type="text" id="note-title" placeholder="제목을 입력하세요..." autocomplete="off">
+        <textarea id="note-content" placeholder="메모할 내용을 자유롭게 끄적여보세요..."></textarea>
+        <div class="btn-group">
+            <button class="btn-secondary" id="btn-cancel" style="display: none;" onclick="resetForm()">취소</button>
+            <button class="btn-primary" id="btn-save" onclick="saveNote()">저장하기</button>
+        </div>
+    </div>
+
+    <div id="notes-container" class="notes-grid">
+        <div class="loading">불러오는 중...</div>
+    </div>
+</div>
+
+<script>
+    const API_URL = '/api/notes';
+    let currentNotes = [];
+
+    window.addEventListener('DOMContentLoaded', fetchNotes);
+
+    async function fetchNotes() {
+        try {
+            const res = await fetch(API_URL);
+            if (!res.ok) throw new Error('Failed to fetch');
+            const notes = await res.json();
+            currentNotes = notes;
+            renderNotes(notes);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('notes-container').innerHTML = 
+                `<div class="empty-state">메모를 불러오는데 실패했습니다. 서버가 실행중인지 확인해주세요. (py server.py)</div>`;
+        }
+    }
+
+    function renderNotes(notes) {
+        const container = document.getElementById('notes-container');
+        if (notes.length === 0) {
+            container.innerHTML = `<div class="empty-state">아직 작성된 메모가 없어요 😊<br>첫 번째 메모를 남겨보세요!</div>`;
+            return;
+        }
+
+        container.innerHTML = notes.map(note => `
+            <div class="note-card" onclick="editNote(${note.id})">
+                <div class="note-title">${escapeHTML(note.title) || '제목 없음'}</div>
+                <div class="note-content">${escapeHTML(note.content) || '내용 없음'}</div>
+                <div class="note-footer">
+                    <span>${formatDate(note.created_at)}</span>
+                    <div class="note-actions">
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteNote(${note.id})">삭제</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function saveNote() {
+        const idInput = document.getElementById('note-id').value;
+        const titleInput = document.getElementById('note-title').value.trim();
+        const contentInput = document.getElementById('note-content').value.trim();
+
+        if (!titleInput && !contentInput) {
+            alert('제목이나 내용을 입력해주세요.');
+            return;
+        }
+
+        const noteData = { title: titleInput, content: contentInput };
+
+        try {
+            if (idInput) {
+                await fetch(`${API_URL}/${idInput}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(noteData)
+                });
+            } else {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(noteData)
+                });
+            }
+            
+            resetForm();
+            fetchNotes();
+        } catch (err) {
+            console.error(err);
+            alert('저장 중 오류가 발생했습니다.');
+        }
+    }
+
+    function editNote(id) {
+        const note = currentNotes.find(n => n.id === id);
+        if (!note) return;
+        
+        document.getElementById('note-id').value = note.id;
+        document.getElementById('note-title').value = note.title;
+        document.getElementById('note-content').value = note.content;
+        
+        document.getElementById('btn-save').textContent = '수정하기';
+        document.getElementById('btn-cancel').style.display = 'block';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('note-content').focus();
+    }
+
+    async function deleteNote(id) {
+        if (!confirm('정말로 이 메모를 삭제하시겠습니까?')) return;
+        
+        try {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            
+            if (document.getElementById('note-id').value == id) {
+                resetForm();
+            }
+            
+            fetchNotes();
+        } catch (err) {
+            console.error(err);
+            alert('삭제 중 오류가 발생했습니다.');
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('note-id').value = '';
+        document.getElementById('note-title').value = '';
+        document.getElementById('note-content').value = '';
+        document.getElementById('btn-save').textContent = '저장하기';
+        document.getElementById('btn-cancel').style.display = 'none';
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag])
+        );
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date)) return dateStr.substring(0, 10);
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        } catch(e) {
+            return dateStr;
+        }
+    }
+</script>
+
+</body>
+</html>
