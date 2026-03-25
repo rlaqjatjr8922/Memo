@@ -227,7 +227,7 @@
 <div class="container">
     <header>
         <h1>📝 메모장</h1>
-        <p class="subtitle">작성한 메모가 DB에 영구 저장됩니다.</p>
+        <p class="subtitle">작성한 메모가 브라우저에 안전하게 저장됩니다.</p>
     </header>
 
     <div class="editor-card">
@@ -246,23 +246,25 @@
 </div>
 
 <script>
-    const API_URL = '/api/notes';
+    const STORAGE_KEY = 'simple_memo_notes';
     let currentNotes = [];
 
     window.addEventListener('DOMContentLoaded', fetchNotes);
 
-    async function fetchNotes() {
-        try {
-            const res = await fetch(API_URL);
-            if (!res.ok) throw new Error('Failed to fetch');
-            const notes = await res.json();
-            currentNotes = notes;
-            renderNotes(notes);
-        } catch (err) {
-            console.error(err);
-            document.getElementById('notes-container').innerHTML = 
-                `<div class="empty-state">메모를 불러오는데 실패했습니다. 서버가 실행중인지 확인해주세요. (py server.py)</div>`;
+    function fetchNotes() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                currentNotes = JSON.parse(stored);
+            } catch (e) {
+                currentNotes = [];
+            }
+        } else {
+            currentNotes = [];
         }
+        // sort by created_at desc
+        currentNotes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        renderNotes(currentNotes);
     }
 
     function renderNotes(notes) {
@@ -286,7 +288,7 @@
         `).join('');
     }
 
-    async function saveNote() {
+    function saveNote() {
         const idInput = document.getElementById('note-id').value;
         const titleInput = document.getElementById('note-title').value.trim();
         const contentInput = document.getElementById('note-content').value.trim();
@@ -296,29 +298,29 @@
             return;
         }
 
-        const noteData = { title: titleInput, content: contentInput };
+        const nowStr = new Date().toISOString();
 
-        try {
-            if (idInput) {
-                await fetch(`${API_URL}/${idInput}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(noteData)
-                });
-            } else {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(noteData)
-                });
+        if (idInput) {
+            const index = currentNotes.findIndex(n => n.id === parseInt(idInput, 10));
+            if (index !== -1) {
+                currentNotes[index].title = titleInput;
+                currentNotes[index].content = contentInput;
+                currentNotes[index].updated_at = nowStr;
             }
-            
-            resetForm();
-            fetchNotes();
-        } catch (err) {
-            console.error(err);
-            alert('저장 중 오류가 발생했습니다.');
+        } else {
+            const newNote = {
+                id: Date.now(),
+                title: titleInput,
+                content: contentInput,
+                created_at: nowStr,
+                updated_at: nowStr
+            };
+            currentNotes.push(newNote);
         }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentNotes));
+        resetForm();
+        fetchNotes();
     }
 
     function editNote(id) {
@@ -336,21 +338,17 @@
         document.getElementById('note-content').focus();
     }
 
-    async function deleteNote(id) {
+    function deleteNote(id) {
         if (!confirm('정말로 이 메모를 삭제하시겠습니까?')) return;
         
-        try {
-            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-            
-            if (document.getElementById('note-id').value == id) {
-                resetForm();
-            }
-            
-            fetchNotes();
-        } catch (err) {
-            console.error(err);
-            alert('삭제 중 오류가 발생했습니다.');
+        currentNotes = currentNotes.filter(n => n.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentNotes));
+        
+        if (document.getElementById('note-id').value == id) {
+            resetForm();
         }
+        
+        fetchNotes();
     }
 
     function resetForm() {
